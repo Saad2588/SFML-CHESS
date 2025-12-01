@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run SFML Chess",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/sfml-chess",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "preLaunchTask": "build sfml-chess"
+        }
+    ]
+}
