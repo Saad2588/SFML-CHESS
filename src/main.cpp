@@ -18,7 +18,7 @@ int main() {
     window.setView(view);
 
 
-    sf::RectangleShape tile(sf::Vector2f(100.f,100.f));
+    sf::RectangleShape tile(sf::Vector2f(tilesize,tilesize));
     
 
 
