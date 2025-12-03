@@ -55,6 +55,25 @@ char CheckPiece(int rows , int collumns){
 
 }
 
+bool isTurn(char piece){
+
+    bool isValid = false;
+
+    if(piece == 'P' || piece == 'N' || piece == 'B' || piece == 'R' || piece == 'Q' || piece == 'K'){
+        if(whiteTurn)
+        isValid = true;
+
+    }
+
+    else if(piece == 'p' || piece == 'n' || piece == 'b' || piece == 'r' || piece == 'q' || piece == 'k'){
+        if(!whiteTurn)
+        isValid = true;
+    }
+
+    return isValid;
+
+}
+
 void loadPieceTextures(){
 
     if (!whiteTextures[0].loadFromFile("assets/sprites/white_pawn.png")) {
@@ -280,14 +299,20 @@ int main() {
                         highlight.setPosition(sf::Vector2f(tilesize * col + startingtilePos, tilesize * row));
                        
                         if(isPiece){
+                            if(isTurn(CheckPiece(row,col))){
+
                              currentPiece = CheckPiece(row,col);
                              selectedRow = row;
                              selectedCol = col;
+                             state = 1;
+
+                            }
+                           
                         }
                        
 
 
-                        state = 1;
+                      
                     }
                     else if (state == 1){
 
