@@ -11,7 +11,12 @@ float const pieceUpscale = 2.2f;
 float const pieceXoffset = 13.f;
 float const pieceYoffset = 6.f;
 
+int state = 0; //0 for piece selection 1 for move selection 
+bool whiteTurn = true;
 
+bool highlightOn = false;
+
+int selectedRow, selectedCol;
 
 
 sf::Texture whiteTextures[6];
@@ -115,7 +120,7 @@ sf::Texture& findTexture(char piece){
 
 
 
-void drawBoard(sf::RenderWindow &window,sf::RectangleShape &tile){
+void drawBoard(sf::RenderWindow &window,sf::RectangleShape &tile,sf::RectangleShape &highlight){
 
 
     for(int i = 0; i < 8; i++){
@@ -132,8 +137,11 @@ void drawBoard(sf::RenderWindow &window,sf::RectangleShape &tile){
 
             tile.setPosition(sf::Vector2(tilesize * j + startingtilePos, tilesize * i));
 
+           
             window.draw(tile);
 
+            if(highlightOn)
+            window.draw(highlight);
 
 
             //pieces
@@ -153,14 +161,82 @@ void drawBoard(sf::RenderWindow &window,sf::RectangleShape &tile){
 
 
 
+}
 
+
+void Move(int row, int col){
+    char temp = board[row][col];
+    board[row][col] = board[selectedRow][selectedCol];
+    board[selectedRow][selectedCol] = temp;
+
+}
+
+
+
+bool isValidPawnMove(int row, int col){
+
+bool isvalid = false;
+
+ if(col == selectedCol){
+
+    if(whiteTurn){
+
+        if(selectedRow - row == 1 || selectedRow - row == 2){
+        isvalid = true;
+    }
+
+    }
+    else{
+
+        if(selectedRow - row == -1 || selectedRow - row == -2){
+        isvalid = true;
+
+    }
+
+}
+
+
+    
+ }
+
+
+return isvalid;
+
+}
+
+bool isValidMoves(char piece, int row, int col){
+
+    bool isvalid;
+
+    if(piece == 'P' || piece == 'p')
+    isvalid = isValidPawnMove(row,col);
+
+
+    if(piece == 'N' || piece == 'n')
+
+    if(piece == 'B' || piece == 'b')
+
+    if(piece == 'R' || piece == 'r')
+
+    if(piece == 'Q' || piece == 'q')
+
+    if(piece == 'K' || piece == 'k')
+
+
+
+    return isvalid;
 
 }
 
 
 
 
+
+
 int main() {
+
+    char currentPiece;
+   
 
     //Get fullscreen size and render accordingly
     sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
@@ -171,22 +247,80 @@ int main() {
     window.setView(view);
 
 
+    //chess tiles
     sf::RectangleShape tile(sf::Vector2f(tilesize,tilesize));
+    sf::RectangleShape highlight(sf::Vector2(tilesize,tilesize));
+    highlight.setFillColor(sf::Color::Transparent);
+    highlight.setOutlineThickness(-3.f);
+    highlight.setOutlineColor(sf::Color::Green);
     
     loadPieceTextures();
 
+    //main loop
     while (window.isOpen()) {
         sf::Event event;
+
+
+
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
+            
+            if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+
+                sf::Vector2u WindowSize = window.getSize();
+
+
+                if(event.mouseButton.x > startingtilePos && event.mouseButton.y < startingtilePos + tilesize * 8){
+                int col = (event.mouseButton.x - startingtilePos) / tilesize;
+                int row = event.mouseButton.y / tilesize;
+
+                    if(state == 0){
+                        highlightOn = true;
+                        highlight.setPosition(sf::Vector2f(tilesize * col + startingtilePos, tilesize * row));
+                       
+                        if(isPiece){
+                             currentPiece = CheckPiece(row,col);
+                             selectedRow = row;
+                             selectedCol = col;
+                        }
+                       
+
+
+                        state = 1;
+                    }
+                    else if (state == 1){
+
+                        if(isValidMoves(currentPiece,row,col)){
+
+
+                            Move(row,col);
+                            whiteTurn = !whiteTurn;
+
+
+
+                        }
+
+
+
+
+
+                        highlightOn = false;
+                        state = 0;
+                    }
+                }
+
+        
+
+
+            }
 
 
            
         //Grey background
         window.clear(sf::Color(65,65,65));
-
-        drawBoard(window,tile);
+        
+        drawBoard(window,tile,highlight);
             
 
 
