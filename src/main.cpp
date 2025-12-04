@@ -11,11 +11,11 @@ float const pieceUpscale = 2.2f;
 float const pieceXoffset = 13.f;
 float const pieceYoffset = 6.f;
 
-int state = 0; //0 for piece selection 1 for move selection 
+int state = 0; //0 for piece selection 1 for move selection -1 for gameover
 bool whiteTurn = true;
 
-int WhiteScore = 0;
-int BlackScore = 0;
+int WScore = 0;
+int BScore = 0;
 
 
 bool highlightOn = false;
@@ -113,7 +113,7 @@ sf::Text WhiteScore;
 WhiteScore.setFont(font);          
 WhiteScore.setCharacterSize(70);   
 WhiteScore.setFillColor(sf::Color::White); 
-WhiteScore.setPosition(100.f, 50.f); 
+WhiteScore.setPosition(200.f, 400.f); 
 
 
 
@@ -121,7 +121,7 @@ sf::Text BlackScore;
 BlackScore.setFont(font);          
 BlackScore.setCharacterSize(70);   
 BlackScore.setFillColor(sf::Color::White); 
-BlackScore.setPosition(100.f, 600.f); 
+BlackScore.setPosition(200.f, 300.f); 
 
    
 
@@ -176,12 +176,20 @@ BlackScore.setPosition(100.f, 600.f);
                 }
             }
 
+
         gameOver(GameOverText);
-           
+        
+
+        WhiteScore.setString(to_string(WScore));
+        BlackScore.setString(to_string(BScore));
+
+
         //Grey background
         window.clear(sf::Color(65,65,65));
         drawBoard(window,tile,highlight,danghighlight);
         window.draw(GameOverText);
+        window.draw(WhiteScore);
+        window.draw(BlackScore);
         window.display();
     }
 
@@ -476,8 +484,40 @@ void drawCheckHighlight(sf::RectangleShape &danghighlight){
 
 void Move(int row, int col){
     char temp;
-    if(isEnemyPiece(row,col))
-    temp = '.';
+    if(isEnemyPiece(row,col)){
+
+        if(whiteTurn){
+
+            if(board[row][col] == 'p')
+            WScore += 1;
+            if(board[row][col] == 'n')
+            WScore += 3;
+            if(board[row][col] == 'b')
+            WScore += 3;
+            if(board[row][col] == 'r')
+            WScore += 5;
+            if(board[row][col] == 'q')
+            WScore += 9;
+        }
+        else{
+
+
+            if(board[row][col] == 'P')
+            BScore += 1;
+            if(board[row][col] == 'N')
+            BScore += 3;
+            if(board[row][col] == 'B')
+            BScore += 3;
+            if(board[row][col] == 'R')
+            BScore += 5;
+            if(board[row][col] == 'Q')
+            BScore += 9;
+
+        }
+
+     temp = '.';
+
+    }
     else
     temp = board[row][col];
 
