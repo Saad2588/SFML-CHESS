@@ -55,6 +55,7 @@ void gameOver(sf::Text &GameOverText);
 
 
 
+
 char board[8][8] = {
     {'r','n','b','q','k','b','n','r'},  
     {'p','p','p','p','p','p','p','p'},
@@ -123,6 +124,11 @@ BlackScore.setCharacterSize(70);
 BlackScore.setFillColor(sf::Color::White); 
 BlackScore.setPosition(200.f, 300.f); 
 
+sf::Text TurnText;
+TurnText.setFont(font);          
+TurnText.setCharacterSize(35);   
+TurnText.setFillColor(sf::Color::White); 
+TurnText.setPosition(1100.f, 350.f); 
    
 
     loadPieceTextures();
@@ -182,11 +188,17 @@ BlackScore.setPosition(200.f, 300.f);
 
         WhiteScore.setString(to_string(WScore));
         BlackScore.setString(to_string(BScore));
+        
+        if(whiteTurn)
+        TurnText.setString("White's Turn");
+        else
+        TurnText.setString("Black's Turn");
 
 
         //Grey background
         window.clear(sf::Color(65,65,65));
         drawBoard(window,tile,highlight,danghighlight);
+        window.draw(TurnText);
         window.draw(GameOverText);
         window.draw(WhiteScore);
         window.draw(BlackScore);
@@ -922,3 +934,4 @@ void gameOver(sf::Text &GameOverText){
 
 
 }
+
