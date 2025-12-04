@@ -14,20 +14,38 @@ float const pieceYoffset = 6.f;
 int state = 0; //0 for piece selection 1 for move selection 
 bool whiteTurn = true;
 
+
 bool highlightOn = false;
+bool dangerHighlightOn = false;
 
 int selectedRow, selectedCol;
+int selectedRow1, selectedCol1;
 
 
 sf::Texture whiteTextures[6];
 sf::Texture blackTextures[6];
 
 //prototypes
+bool isValidMoves(char piece, int row, int col);
+bool isValidMovesforCheck(char piece, int row, int col);
+bool isValidPawnMove(int row, int col);
+bool isValidKnightMove(int row, int col);
+bool isValidBishopMove(int row, int col);
+bool isValidQueenMove(int row, int col);
+bool isValidKingMove(int row, int col);
+void Move(int row, int col);
+bool isPiece(int rows, int collumns);
+char CheckPiece(int rows , int collumns);
+bool isTurn(char piece);
+bool isFriendPiece(int x, int y);
+bool isEnemyPiece(int x, int y);
+void loadPieceTextures();
+sf::Texture& findTexture(char piece);
+void drawBoard(sf::RenderWindow &window,sf::RectangleShape &tile,sf::RectangleShape &highlight, sf::RectangleShape &danghighlight);
+void drawCheckHighlight(sf::RectangleShape &danghighlight);
 
 
 
-
-//definitions
 char board[8][8] = {
     {'r','n','b','q','k','b','n','r'},  
     {'p','p','p','p','p','p','p','p'},
@@ -38,6 +56,101 @@ char board[8][8] = {
     {'P','P','P','P','P','P','P','P'},  
     {'R','N','B','Q','K','B','N','R'}  
 };
+
+int main() {
+
+    char currentPiece;
+   
+
+    //Get fullscreen size and render accordingly
+    sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
+    sf::RenderWindow window(desktop, "SFML Chess", sf::Style::Fullscreen);
+
+    //Setting view to match board
+    sf::View view(sf::FloatRect(0.f, 0.f, desktop.width, desktop.height));
+    window.setView(view);
+
+
+    //chess tiles
+    sf::RectangleShape tile(sf::Vector2f(tilesize,tilesize));
+
+    sf::RectangleShape highlight(sf::Vector2(tilesize,tilesize));
+    highlight.setFillColor(sf::Color::Transparent);
+    highlight.setOutlineThickness(-3.f);
+    highlight.setOutlineColor(sf::Color::Green);
+
+    sf::RectangleShape danghighlight(sf::Vector2(tilesize,tilesize));
+    danghighlight.setFillColor(sf::Color::Transparent);
+    danghighlight.setOutlineThickness(-3.f);
+    danghighlight.setOutlineColor(sf::Color::Red);
+    
+    loadPieceTextures();
+
+    //main loop
+    while (window.isOpen()) {
+        sf::Event event;
+
+
+
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed)
+                window.close();
+            
+            if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+
+                sf::Vector2u WindowSize = window.getSize();
+
+
+                if(event.mouseButton.x > startingtilePos && event.mouseButton.y < startingtilePos + tilesize * 8){
+                int col = (event.mouseButton.x - startingtilePos) / tilesize;
+                int row = event.mouseButton.y / tilesize;
+
+                    if(state == 0){
+                        highlightOn = true;
+                        highlight.setPosition(sf::Vector2f(tilesize * col + startingtilePos, tilesize * row));
+                       
+                        if(isPiece(row,col)){
+                            if(isTurn(CheckPiece(row,col))){
+
+                             currentPiece = CheckPiece(row,col);
+                             selectedRow = row;
+                             selectedCol = col;
+                             state = 1;
+                                cout << "row " << row << "col " << col << endl;
+                            }  
+                        }
+                    }
+                    else if (state == 1){
+
+                        if(isValidMoves(currentPiece,row,col)){
+                            Move(row,col);
+                            whiteTurn = !whiteTurn;
+                            drawCheckHighlight(danghighlight);
+                        }
+                        highlightOn = false;
+                        state = 0;
+                    }
+                }
+            }
+
+
+           
+        //Grey background
+        window.clear(sf::Color(65,65,65));
+        drawBoard(window,tile,highlight,danghighlight);
+        window.display();
+    }
+
+
+
+
+    }
+
+    
+    return 0;
+}
+
+
 
 
 bool isPiece(int rows, int collumns){
@@ -123,8 +236,6 @@ void loadPieceTextures(){
     if (!whiteTextures[0].loadFromFile("assets/sprites/white_pawn.png")) {
     std::cout << "Failed to load wr.png\n";
 }
-
-
     whiteTextures[0].loadFromFile("assets/sprites/white_pawn.png");
     whiteTextures[1].loadFromFile("assets/sprites/white_knight.png");
     whiteTextures[2].loadFromFile("assets/sprites/white_bishop.png");
@@ -172,18 +283,9 @@ sf::Texture& findTexture(char piece){
         case 'k':
         return blackTextures[5];
     }
-
-
-
-
 }
 
-
-
-
-
-
-void drawBoard(sf::RenderWindow &window,sf::RectangleShape &tile,sf::RectangleShape &highlight){
+void drawBoard(sf::RenderWindow &window,sf::RectangleShape &tile,sf::RectangleShape &highlight, sf::RectangleShape &danghighlight){
 
 
     for(int i = 0; i < 8; i++){
@@ -206,6 +308,9 @@ void drawBoard(sf::RenderWindow &window,sf::RectangleShape &tile,sf::RectangleSh
             if(highlightOn)
             window.draw(highlight);
 
+            if(dangerHighlightOn)
+            window.draw(danghighlight);
+
 
             //pieces
             if(isPiece(i,j)){
@@ -226,6 +331,69 @@ void drawBoard(sf::RenderWindow &window,sf::RectangleShape &tile,sf::RectangleSh
 
 }
 
+void drawCheckHighlight(sf::RectangleShape &danghighlight){
+
+     dangerHighlightOn = false;
+
+       
+
+    for(int i = 0; i < 8; i++){
+        for(int j = 0; j < 8; j++){
+
+           if(whiteTurn && board[i][j] == 'K'){
+
+            selectedRow1 = i;
+             selectedCol1 = j;
+            
+
+           }
+           else if(!whiteTurn && board[i][j] == 'k'){
+
+            selectedRow1 = i;
+             selectedCol1 = j;
+            
+           }
+
+
+        }
+    }
+
+
+
+    int temp1 = selectedRow;
+    int temp2 = selectedCol;
+
+
+  
+
+    for(int i = 0; i < 8; i++){
+        for(int j = 0; j < 8; j++){
+            if(isEnemyPiece(i,j)){
+                selectedRow = i;
+                selectedCol = j;
+               if(isValidMovesforCheck(board[i][j],selectedRow1,selectedCol1)) {
+                
+                danghighlight.setPosition(sf::Vector2f(tilesize * selectedCol1 + startingtilePos , tilesize * selectedRow1 ));
+
+                cout << "King is threatened by piece " << board[i][j]
+                         << " at (" << i << "," << j << ")" << endl;
+
+                dangerHighlightOn = true;
+
+               }
+
+            }
+
+        }
+    }
+
+
+    selectedRow = temp1;
+    selectedCol = temp2;
+   
+   
+
+}
 
 void Move(int row, int col){
     char temp;
@@ -245,11 +413,12 @@ bool isValidPawnMove(int row, int col){
 
 bool isvalid = false;
 
+
  int yDiff = row - selectedRow;
  int xDiff = col - selectedCol;
 
- if(col == selectedCol){
-
+ if(col == selectedCol && !isEnemyPiece(row,col)){
+    
     if(whiteTurn){
 
         if(yDiff == -2 && selectedRow == 6)
@@ -293,6 +462,30 @@ return isvalid;
 
 }
 
+bool isValidPawnMoveForCheck(char pawn,int row, int col){
+
+bool isvalid = false;
+
+
+ int yDiff = row - selectedRow;
+ int xDiff = col - selectedCol;
+
+   if(pawn == 'P') {
+    if((xDiff == 1 && yDiff == -1) || (xDiff == -1 && yDiff == -1))
+        isvalid = true;
+    }
+
+
+    else if(pawn == 'p') {
+        if((xDiff == 1 && yDiff == 1) || (xDiff == -1 && yDiff == 1))
+         isvalid = true;
+    }
+
+
+return isvalid;
+
+}
+
 bool isValidKnightMove(int row, int col){
 
     bool isValid = false;
@@ -316,6 +509,13 @@ bool isValidBishopMove(int row, int col){
    
     bool isValid = true;
 
+
+    if (row < 0 || row > 7 || col < 0 || col > 7)
+    return false;
+
+
+
+
     int yDiff = row - selectedRow;
     int xDiff = col - selectedCol;
     
@@ -335,6 +535,8 @@ bool isValidBishopMove(int row, int col){
     int j = selectedCol + xIncrement;
 
         while (i != row && j != col) {
+            if (i < 0 || i > 7 || j < 0 || j > 7)
+            break;
         if (isPiece(i, j))
             isValid = false; 
         i += yIncrement;
@@ -352,6 +554,12 @@ bool isValidBishopMove(int row, int col){
 bool isValidRookMove(int row, int col){
    
     bool isValid = true;
+
+
+    if (row < 0 || row > 7 || col < 0 || col > 7)
+    return false;
+
+
 
     int yDiff = row - selectedRow;
     int xDiff = col - selectedCol;
@@ -377,6 +585,10 @@ bool isValidRookMove(int row, int col){
     int j = selectedCol + xIncrement;
 
         while (i != row && j != col) {
+
+            if (i < 0 || i > 7 || j < 0 || j > 7)
+            break;
+
         if (isPiece(i, j))
             isValid = false; 
         i += yIncrement;
@@ -392,6 +604,13 @@ bool isValidRookMove(int row, int col){
 
 bool isValidQueenMove(int row, int col) {
     bool isValid = true;
+
+
+    if (row < 0 || row > 7 || col < 0 || col > 7)
+    return false;
+
+
+
 
     int yDiff = row - selectedRow;
     int xDiff = col - selectedCol;
@@ -417,6 +636,8 @@ bool isValidQueenMove(int row, int col) {
     int j = selectedCol + xIncrement;
 
     while (i != row || j != col) {
+            if (i < 0 || i > 7 || j < 0 || j > 7)
+            break;
         if (isPiece(i, j))
             isValid = false;
         i += yIncrement;
@@ -452,6 +673,7 @@ bool isValidMoves(char piece, int row, int col){
 
     bool isvalid;
 
+  
 
     if(piece == 'P' || piece == 'p')
     isvalid = isValidPawnMove(row,col);
@@ -483,117 +705,35 @@ bool isValidMoves(char piece, int row, int col){
 }
 
 
+bool isValidMovesforCheck(char piece, int row, int col){
 
+    bool isvalid;
 
+  
 
+    if(piece == 'P' || piece == 'p')
+    isvalid = isValidPawnMoveForCheck(piece,row,col);
 
-int main() {
+    if(piece == 'N' || piece == 'n')
+    isvalid = isValidKnightMove(row,col);
 
-    char currentPiece;
-   
+    if(piece == 'B' || piece == 'b')
+    isvalid = isValidBishopMove(row,col);
 
-    //Get fullscreen size and render accordingly
-    sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
-    sf::RenderWindow window(desktop, "SFML Chess", sf::Style::Fullscreen);
+    if(piece == 'R' || piece == 'r')
+    isvalid = isValidRookMove(row,col);
 
-    //Setting view to match board
-    sf::View view(sf::FloatRect(0.f, 0.f, desktop.width, desktop.height));
-    window.setView(view);
+    if(piece == 'Q' || piece == 'q')
+     isvalid = isValidQueenMove(row,col);
 
+    if(piece == 'K' || piece == 'k')
+     isvalid = false;
 
-    //chess tiles
-    sf::RectangleShape tile(sf::Vector2f(tilesize,tilesize));
-    sf::RectangleShape highlight(sf::Vector2(tilesize,tilesize));
-    highlight.setFillColor(sf::Color::Transparent);
-    highlight.setOutlineThickness(-3.f);
-    highlight.setOutlineColor(sf::Color::Green);
-    
-    loadPieceTextures();
+    if(row == selectedRow && col == selectedCol)
+        isvalid = false;
 
-    //main loop
-    while (window.isOpen()) {
-        sf::Event event;
+  
 
+    return isvalid;
 
-
-        while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed)
-                window.close();
-            
-            if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-
-                sf::Vector2u WindowSize = window.getSize();
-
-
-                if(event.mouseButton.x > startingtilePos && event.mouseButton.y < startingtilePos + tilesize * 8){
-                int col = (event.mouseButton.x - startingtilePos) / tilesize;
-                int row = event.mouseButton.y / tilesize;
-
-                    if(state == 0){
-                        highlightOn = true;
-                        highlight.setPosition(sf::Vector2f(tilesize * col + startingtilePos, tilesize * row));
-                       
-                        if(isPiece(row,col)){
-                            if(isTurn(CheckPiece(row,col))){
-
-                             currentPiece = CheckPiece(row,col);
-                             selectedRow = row;
-                             selectedCol = col;
-                             state = 1;
-                                cout << "row " << row << "col " << col << endl;
-                            }
-                           
-                        }
-                       
-
-
-                      
-                    }
-                    else if (state == 1){
-
-                        if(isValidMoves(currentPiece,row,col)){
-
-
-                            Move(row,col);
-                            whiteTurn = !whiteTurn;
-
-
-
-                        }
-
-
-
-
-
-                        highlightOn = false;
-                        state = 0;
-                    }
-                }
-
-        
-
-
-            }
-
-
-           
-        //Grey background
-        window.clear(sf::Color(65,65,65));
-        
-        drawBoard(window,tile,highlight);
-            
-
-
-
-
-        window.display();
-    }
-
-
-
-
-    }
-
-    
-    return 0;
 }
