@@ -74,6 +74,50 @@ bool isTurn(char piece){
 
 }
 
+bool isFriendPiece(int x, int y){
+    bool isvalid = false;
+    if(whiteTurn){
+        if(board[x][y] == 'P' || board[x][y] == 'N'  || board[x][y] == 'B' ||  board[x][y] == 'R' ||  board[x][y] == 'Q' ||  board[x][y] == 'K')
+         isvalid = true;
+        
+      
+
+    }
+    else{
+        if(board[x][y] == 'p' || board[x][y] == 'n'  || board[x][y] == 'b' ||  board[x][y] == 'r' ||  board[x][y] == 'q' ||  board[x][y] == 'k')
+        isvalid = true;
+
+    }
+
+    return isvalid;
+
+}
+
+bool isEnemyPiece(int x, int y){
+    bool isvalid = false;
+    if(whiteTurn){
+       
+        if(board[x][y] == 'p' || board[x][y] == 'n'  || board[x][y] == 'b' ||  board[x][y] == 'r' ||  board[x][y] == 'q' ||  board[x][y] == 'k')
+        isvalid = true;
+
+    }
+    else{
+
+        if(board[x][y] == 'P' || board[x][y] == 'N'  || board[x][y] == 'B' ||  board[x][y] == 'R' ||  board[x][y] == 'Q' ||  board[x][y] == 'K')
+        isvalid = true;
+        
+    }
+    
+  
+
+    return isvalid;
+
+}
+
+
+
+
+
 void loadPieceTextures(){
 
     if (!whiteTextures[0].loadFromFile("assets/sprites/white_pawn.png")) {
@@ -184,7 +228,12 @@ void drawBoard(sf::RenderWindow &window,sf::RectangleShape &tile,sf::RectangleSh
 
 
 void Move(int row, int col){
-    char temp = board[row][col];
+    char temp;
+    if(isEnemyPiece(row,col))
+    temp = '.';
+    else
+    temp = board[row][col];
+
     board[row][col] = board[selectedRow][selectedCol];
     board[selectedRow][selectedCol] = temp;
 
@@ -196,52 +245,238 @@ bool isValidPawnMove(int row, int col){
 
 bool isvalid = false;
 
+ int yDiff = row - selectedRow;
+ int xDiff = col - selectedCol;
+
  if(col == selectedCol){
 
     if(whiteTurn){
 
-        if(selectedRow - row == 1 || selectedRow - row == 2){
+        if(yDiff == -2 && selectedRow == 6)
+        isvalid = true;
+        else if(yDiff == -1){
         isvalid = true;
     }
-
-    }
+}
     else{
-
-        if(selectedRow - row == -1 || selectedRow - row == -2){
+        if(yDiff == 2 && selectedRow == 1)
+        isvalid = true;
+        else if(yDiff == 1){
         isvalid = true;
 
+     }
+
     }
+
 
 }
 
+else{
 
-    
- }
+    if(whiteTurn && (xDiff == 1 && yDiff == -1 || xDiff == -1 && yDiff == -1)){
+        if(isEnemyPiece(row,col))
+            isvalid = true;
+        }
+
+    else if(!whiteTurn && (xDiff == -1 && yDiff == 1 || xDiff == 1 && yDiff == 1)){
+        if(isEnemyPiece(row,col))
+            isvalid = true;
+    }
+
+
+
+
+}
 
 
 return isvalid;
 
 }
 
+bool isValidKnightMove(int row, int col){
+
+    bool isValid = false;
+
+    int yDiff = row - selectedRow;
+    int xDiff = col - selectedCol;
+
+    if((abs(xDiff) == 2 && abs(yDiff) == 1) || (abs(yDiff) == 2 && abs(xDiff) == 1))
+        isValid = true;
+
+    
+
+
+
+    return isValid;
+
+}
+
+
+bool isValidBishopMove(int row, int col){
+   
+    bool isValid = true;
+
+    int yDiff = row - selectedRow;
+    int xDiff = col - selectedCol;
+    
+    if(abs(yDiff) != abs(xDiff))
+        isValid = false;
+
+
+    int xIncrement = 1;
+    int yIncrement = 1;
+
+    if(xDiff < 0)
+        xIncrement = -1;
+    if(yDiff < 0)
+        yIncrement = -1;
+
+    int i = selectedRow + yIncrement;
+    int j = selectedCol + xIncrement;
+
+        while (i != row && j != col) {
+        if (isPiece(i, j))
+            isValid = false; 
+        i += yIncrement;
+        j += xIncrement;
+    }
+
+  
+
+
+    return isValid;
+}
+
+
+
+bool isValidRookMove(int row, int col){
+   
+    bool isValid = true;
+
+    int yDiff = row - selectedRow;
+    int xDiff = col - selectedCol;
+    
+    if((row != selectedRow) && (col != selectedCol))
+        isValid = false;
+
+
+    int xIncrement = 1;
+    int yIncrement = 1;
+
+
+    if(xDiff == 0)
+        xIncrement = 0;
+    if(yDiff == 0)
+        yIncrement = 0;
+    if(xDiff < 0)
+        xIncrement = -1;
+    if(yDiff < 0)
+        yIncrement = -1;
+
+    int i = selectedRow + yIncrement;
+    int j = selectedCol + xIncrement;
+
+        while (i != row && j != col) {
+        if (isPiece(i, j))
+            isValid = false; 
+        i += yIncrement;
+        j += xIncrement;
+    }
+
+  
+
+
+    return isValid;
+}
+
+
+bool isValidQueenMove(int row, int col) {
+    bool isValid = true;
+
+    int yDiff = row - selectedRow;
+    int xDiff = col - selectedCol;
+
+    
+    if (!((row == selectedRow) || (col == selectedCol) || (abs(yDiff) == abs(xDiff))))
+        isValid = false;
+
+    int xIncrement = 1;
+    int yIncrement = 1;
+
+    
+    if (xDiff == 0)
+        xIncrement = 0;
+    if (yDiff == 0)
+        yIncrement = 0;
+    if (xDiff < 0)
+        xIncrement = -1;
+    if (yDiff < 0)
+        yIncrement = -1;
+
+    int i = selectedRow + yIncrement;
+    int j = selectedCol + xIncrement;
+
+    while (i != row || j != col) {
+        if (isPiece(i, j))
+            isValid = false;
+        i += yIncrement;
+        j += xIncrement;
+    }
+
+    return isValid;
+}
+
+bool isValidKingMove(int row, int col){
+
+    bool isValid = true;
+
+
+    int yDiff = row - selectedRow;
+    int xDiff = col - selectedCol;
+
+    if((abs(xDiff) == 1 && abs(yDiff) == 0) || (abs(yDiff) == 1 && abs(xDiff) == 0) || (abs(yDiff) == 1 && abs(xDiff) == 1))
+        isValid = true;
+
+    
+
+    return isValid;
+
+
+
+}
+
+
+
+
 bool isValidMoves(char piece, int row, int col){
 
     bool isvalid;
 
+
     if(piece == 'P' || piece == 'p')
     isvalid = isValidPawnMove(row,col);
 
-
     if(piece == 'N' || piece == 'n')
+    isvalid = isValidKnightMove(row,col);
 
     if(piece == 'B' || piece == 'b')
+    isvalid = isValidBishopMove(row,col);
 
     if(piece == 'R' || piece == 'r')
+    isvalid = isValidRookMove(row,col);
 
     if(piece == 'Q' || piece == 'q')
+     isvalid = isValidQueenMove(row,col);
 
     if(piece == 'K' || piece == 'k')
+     isvalid = isValidKingMove(row,col);
 
 
+    if(row == selectedRow && col == selectedCol)
+        isvalid = false;
+
+    if(isFriendPiece(row,col))
+        isvalid = false;
 
     return isvalid;
 
@@ -298,14 +533,14 @@ int main() {
                         highlightOn = true;
                         highlight.setPosition(sf::Vector2f(tilesize * col + startingtilePos, tilesize * row));
                        
-                        if(isPiece){
+                        if(isPiece(row,col)){
                             if(isTurn(CheckPiece(row,col))){
 
                              currentPiece = CheckPiece(row,col);
                              selectedRow = row;
                              selectedCol = col;
                              state = 1;
-
+                                cout << "row " << row << "col " << col << endl;
                             }
                            
                         }
