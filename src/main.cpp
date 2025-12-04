@@ -14,6 +14,9 @@ float const pieceYoffset = 6.f;
 int state = 0; //0 for piece selection 1 for move selection 
 bool whiteTurn = true;
 
+int WhiteScore = 0;
+int BlackScore = 0;
+
 
 bool highlightOn = false;
 bool dangerHighlightOn = false;
@@ -21,6 +24,8 @@ bool dangerHighlightOn = false;
 int selectedRow, selectedCol;
 int selectedRow1, selectedCol1;
 
+bool gameover = false;
+bool whiteWin;
 
 sf::Texture whiteTextures[6];
 sf::Texture blackTextures[6];
@@ -43,6 +48,10 @@ void loadPieceTextures();
 sf::Texture& findTexture(char piece);
 void drawBoard(sf::RenderWindow &window,sf::RectangleShape &tile,sf::RectangleShape &highlight, sf::RectangleShape &danghighlight);
 void drawCheckHighlight(sf::RectangleShape &danghighlight);
+bool IscheckMate(int row, int col);
+void PromotePawn();
+void checkForKing();
+void gameOver(sf::Text &GameOverText);
 
 
 
@@ -83,7 +92,39 @@ int main() {
     danghighlight.setFillColor(sf::Color::Transparent);
     danghighlight.setOutlineThickness(-3.f);
     danghighlight.setOutlineColor(sf::Color::Red);
-    
+
+
+sf::Font font;
+if (!font.loadFromFile("assets/font/Roboto-Black.ttf")) {
+    std::cout << "Failed to load font!" << std::endl;
+}
+
+
+sf::Text GameOverText;
+GameOverText.setFont(font);          
+GameOverText.setCharacterSize(70);   
+GameOverText.setFillColor(sf::Color::White); 
+GameOverText.setPosition(10.f, 10.f); 
+
+
+
+
+sf::Text WhiteScore;
+WhiteScore.setFont(font);          
+WhiteScore.setCharacterSize(70);   
+WhiteScore.setFillColor(sf::Color::White); 
+WhiteScore.setPosition(100.f, 50.f); 
+
+
+
+sf::Text BlackScore;
+BlackScore.setFont(font);          
+BlackScore.setCharacterSize(70);   
+BlackScore.setFillColor(sf::Color::White); 
+BlackScore.setPosition(100.f, 600.f); 
+
+   
+
     loadPieceTextures();
 
     //main loop
@@ -127,17 +168,20 @@ int main() {
                             whiteTurn = !whiteTurn;
                             drawCheckHighlight(danghighlight);
                         }
+                        PromotePawn();
+                        checkForKing();
                         highlightOn = false;
                         state = 0;
                     }
                 }
             }
 
-
+        gameOver(GameOverText);
            
         //Grey background
         window.clear(sf::Color(65,65,65));
         drawBoard(window,tile,highlight,danghighlight);
+        window.draw(GameOverText);
         window.display();
     }
 
@@ -308,7 +352,7 @@ void drawBoard(sf::RenderWindow &window,sf::RectangleShape &tile,sf::RectangleSh
             if(highlightOn)
             window.draw(highlight);
 
-            if(dangerHighlightOn)
+            if(dangerHighlightOn && !gameover)
             window.draw(danghighlight);
 
 
@@ -331,10 +375,50 @@ void drawBoard(sf::RenderWindow &window,sf::RectangleShape &tile,sf::RectangleSh
 
 }
 
+bool IscheckMate(int row, int col){
+    bool squareAvailable = false;
+
+    int temp1 = selectedRow;
+    int temp2 = selectedCol;
+
+    selectedRow = row;
+    selectedCol1 = col;
+
+
+    if(isValidKingMove(row+1,col))
+    squareAvailable = true;
+    if(isValidKingMove(row+1,col+1))
+    squareAvailable = true;
+    if(isValidKingMove(row,col+1))
+    squareAvailable = true;
+    if(isValidKingMove(row-1,col+1))
+    squareAvailable = true;
+    if(isValidKingMove(row-1,col))
+    squareAvailable = true;
+    if(isValidKingMove(row-1,col-1))
+    squareAvailable = true;
+    if(isValidKingMove(row,col-1))
+    squareAvailable = true;
+    if(isValidKingMove(row+1,col-1))
+    squareAvailable = true;
+
+
+    selectedRow = temp1;
+    selectedCol = temp2;
+
+
+    return squareAvailable;
+    
+    
+
+
+}
+
+
 void drawCheckHighlight(sf::RectangleShape &danghighlight){
 
      dangerHighlightOn = false;
-
+    char piece;
        
 
     for(int i = 0; i < 8; i++){
@@ -344,27 +428,22 @@ void drawCheckHighlight(sf::RectangleShape &danghighlight){
 
             selectedRow1 = i;
              selectedCol1 = j;
-            
+            piece == 'K';
 
            }
            else if(!whiteTurn && board[i][j] == 'k'){
 
             selectedRow1 = i;
              selectedCol1 = j;
-            
+            piece == 'k';
            }
 
 
         }
     }
 
-
-
     int temp1 = selectedRow;
     int temp2 = selectedCol;
-
-
-  
 
     for(int i = 0; i < 8; i++){
         for(int j = 0; j < 8; j++){
@@ -372,11 +451,9 @@ void drawCheckHighlight(sf::RectangleShape &danghighlight){
                 selectedRow = i;
                 selectedCol = j;
                if(isValidMovesforCheck(board[i][j],selectedRow1,selectedCol1)) {
-                
+                cout << "king is being attacked by: " << board[i][j] << " at " << i << " "  << j << endl;
                 danghighlight.setPosition(sf::Vector2f(tilesize * selectedCol1 + startingtilePos , tilesize * selectedRow1 ));
-
-                cout << "King is threatened by piece " << board[i][j]
-                         << " at (" << i << "," << j << ")" << endl;
+                IscheckMate(selectedRow1,selectedCol1);
 
                 dangerHighlightOn = true;
 
@@ -394,6 +471,8 @@ void drawCheckHighlight(sf::RectangleShape &danghighlight){
    
 
 }
+
+
 
 void Move(int row, int col){
     char temp;
@@ -652,6 +731,9 @@ bool isValidKingMove(int row, int col){
     bool isValid = true;
 
 
+    if (row < 0 || row > 7 || col < 0 || col > 7)
+    return false;
+
     int yDiff = row - selectedRow;
     int xDiff = col - selectedCol;
 
@@ -735,5 +817,68 @@ bool isValidMovesforCheck(char piece, int row, int col){
   
 
     return isvalid;
+
+}
+
+void PromotePawn(){
+
+    for(int i = 0; i < 8; i++){
+
+        if(board[7][i] == 'p')
+        board[7][i] = 'q';
+
+
+
+        if(board[0][i] == 'P')
+        board[0][i] = 'Q';
+    }
+
+}
+
+
+void checkForKing(){
+
+    bool blackPresent = false;
+    bool whitePresent = false;
+
+    for(int i = 0; i < 8; i++){
+        for(int j = 0; j < 8; j++){
+
+            if(board[i][j] == 'k')
+            blackPresent = true;
+            if(board[i][j] == 'K')
+            whitePresent = true;
+
+        }
+
+
+    }
+    if(!blackPresent){
+        whiteWin = true;
+        gameover = true;
+        
+    }
+    if(!whitePresent){
+        whiteWin = false;
+        gameover = true;
+    }
+
+
+
+
+}
+
+void gameOver(sf::Text &GameOverText){
+
+    if(gameover == true){
+
+        if(whiteWin)
+        GameOverText.setString("White Wins");
+        else
+        GameOverText.setString("Black Wins");
+
+        state = -1;
+    }
+
 
 }
