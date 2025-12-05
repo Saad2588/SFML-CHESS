@@ -103,7 +103,7 @@ if (!font.loadFromFile("assets/font/Roboto-Black.ttf")) {
 
 sf::Text GameOverText;
 GameOverText.setFont(font);          
-GameOverText.setCharacterSize(70);   
+GameOverText.setCharacterSize(50);   
 GameOverText.setFillColor(sf::Color::White); 
 GameOverText.setPosition(10.f, 10.f); 
 
